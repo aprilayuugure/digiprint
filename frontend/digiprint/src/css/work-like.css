@@ -1,0 +1,63 @@
+.work-like-control,
+.work-favorite-control {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    user-select: none;
+}
+
+.work-like-button,
+.work-favorite-button {
+    border: 0;
+    background: rgba(255, 255, 255, 0.85);
+    border-radius: 999px;
+    padding: 2px 10px;
+    line-height: 1;
+    font-weight: 700;
+    color: #6c757d;
+    cursor: pointer;
+}
+
+.work-like-button svg,
+.work-favorite-button svg {
+    width: 18px;
+    height: 18px;
+    display: block;
+}
+
+.work-like-button.liked {
+    background: rgba(255, 255, 255, 0.95);
+    color: #e83e8c;
+}
+
+.work-favorite-button.favorited {
+    background: rgba(255, 255, 255, 0.95);
+    color: #ffc107;
+}
+
+.work-like-button:disabled,
+.work-favorite-button:disabled {
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+.work-like-count,
+.work-favorite-count {
+    font-size: 0.95rem;
+    color: #495057;
+    min-width: 2ch;
+    text-align: right;
+}
+
+.work-like-overlay {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    z-index: 10;
+}
+
+.work-like-display {
+    cursor: default;
+    pointer-events: none; /* purely visual on WorkCard */
+}
+

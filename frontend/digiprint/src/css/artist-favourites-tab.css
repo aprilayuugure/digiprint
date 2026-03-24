@@ -1,0 +1,8 @@
+/* Căn giữa thông báo empty trong khoảng trống còn lại của cột nội dung */
+.artist-favourites-empty {
+    min-height: calc(100vh - 12rem);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+}

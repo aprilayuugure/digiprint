@@ -1,0 +1,14 @@
+.work-detail-comments-list {
+    max-height: 420px;
+    overflow-y: auto;
+}
+
+.work-detail-comments-item--reply {
+    margin-left: 1.5rem;
+    padding-left: 0.75rem;
+    border-left: 2px solid rgba(0, 0, 0, 0.08);
+}
+
+.work-detail-comments-reply-form textarea {
+    font-size: 0.9rem;
+}

@@ -1,0 +1,151 @@
+@startuml DigiPrint_Database_ER
+!theme plain
+skinparam linetype ortho
+skinparam roundcorner 8
+title DigiPrint — database schema (from JPA entities)
+
+' --- Core auth & profile ---
+entity "accounts" as accounts {
+  * **account_id** : INT <<PK, IDENTITY>>
+  --
+  * **email** : VARCHAR(255) <<UNIQUE, NOT NULL>>
+  **password** : VARCHAR(255)
+  **role** : VARCHAR(50) <<Role>>
+}
+
+entity "users" as users {
+  * **user_id** : INT <<PK, IDENTITY>>
+  --
+  **background_image_url** : VARCHAR(255)
+  **image_url** : VARCHAR(255)
+  **username** : VARCHAR(255) <<UNIQUE>>
+  **first_name** : VARCHAR(255)
+  **last_name** : VARCHAR(255)
+  **date_of_birth** : DATE
+  **gender** : VARCHAR(50) <<Gender>>
+  **location** : VARCHAR(255)
+  **biography** : VARCHAR(255)
+  * **account_id** : INT <<FK, UNIQUE>>\n→ accounts
+}
+
+' --- Catalog ---
+entity "tags" as tags {
+  * **tag_id** : INT <<PK, IDENTITY>>
+  --
+  **tag_name** : VARCHAR(255) <<UNIQUE>>
+  **tag_description** : VARCHAR(255)
+  **tag_work_count** : INT
+  **tag_genre** : VARCHAR(50) <<Genre>>
+}
+
+entity "works" as works {
+  * **work_id** : INT <<PK, IDENTITY>>
+  --
+  **genre** : VARCHAR(50) <<Genre>>
+  **work_source** : VARCHAR(255)
+  **thumbnail** : VARCHAR(255)
+  **work_title** : VARCHAR(255)
+  **work_description** : VARCHAR(255)
+  **work_upload_date** : DATETIME2
+  **rating** : VARCHAR(50) <<Rating>>
+  **user_id** : INT <<FK>>\n→ users
+  **like_count** : INT
+}
+
+entity "work_tags" as work_tags {
+  * **work_id** : INT <<PK, FK>>\n→ works
+  * **tag_id** : INT <<PK, FK>>\n→ tags
+}
+
+entity "likes" as likes {
+  * **user_id** : INT <<PK, FK>>\n→ users
+  * **work_id** : INT <<PK, FK>>\n→ works
+}
+
+entity "comments" as comments {
+  * **comment_id** : INT <<PK, IDENTITY>>
+  --
+  * **work_id** : INT <<FK, NOT NULL>>\n→ works
+  * **user_id** : INT <<FK, NOT NULL>>\n→ users
+  **reply_to_id** : INT <<FK>>\n→ comments
+  * **comment_content** : VARCHAR(2000)
+  * **comment_date** : DATETIME2
+}
+
+entity "follows" as follows {
+  * **user_id** : INT <<PK, FK>>\n→ users (follower)
+  * **artist_id** : INT <<PK, FK>>\n→ users (artist)
+}
+
+' --- Commerce ---
+entity "commissions" as commissions {
+  * **commission_id** : INT <<PK, IDENTITY>>
+  --
+  **commission_type** : VARCHAR(255)
+  **commission_description** : VARCHAR(255)
+  * **commission_price** : INT
+  **genre** : VARCHAR(50) <<Genre>>
+  **user_id** : INT <<FK>>\n→ users
+}
+
+entity "orders" as orders {
+  * **order_id** : INT <<PK, IDENTITY>>
+  --
+  **customer_account_id** : INT <<FK>>\n→ accounts
+  * **price** : DOUBLE
+  * **order_status** : VARCHAR(50) <<OrderStatus>>
+  * **created_at** : DATETIME2
+  **completed_at** : DATETIME2
+}
+
+entity "order_items" as order_items {
+  * **order_item_id** : INT <<PK, IDENTITY>>
+  --
+  * **order_id** : INT <<FK, NOT NULL>>\n→ orders
+  * **commission_id** : INT <<FK, NOT NULL>>\n→ commissions
+  * **quantity** : INT
+}
+
+' --- Relationships ---
+accounts ||--|| users : "1 : 1\n(account_id on users)"
+
+users ||--o{ works : "creates"
+users ||--o{ commissions : "artist"
+users ||--o{ likes
+users ||--o{ comments
+users ||--o{ follows : "follower\n(user_id)"
+users ||--o{ follows : "followed artist\n(artist_id)"
+
+works ||--o{ work_tags
+tags ||--o{ work_tags
+works ||--o{ likes
+works ||--o{ comments
+
+comments ||--o{ comments : "reply_to_id"
+
+accounts ||--o{ orders : "customer"
+
+orders ||--o{ order_items
+commissions ||--o{ order_items
+
+note bottom of accounts
+  **Role:** USER | ARTIST | ADMIN
+end note
+
+note bottom of users
+  **Gender:** MALE | FEMALE | OTHER
+end note
+
+note bottom of tags
+  **Genre:** ART | MUSIC | LITERATURE
+end note
+
+note bottom of works
+  **Genre / Rating** stored as STRING enums
+end note
+
+note bottom of orders
+  **OrderStatus:** DRAFT, PENDING, ACCEPTED,\nCANCELLED, IN_PROGRESS, COMPLETED, REJECTED
+end note
+
+@enduml

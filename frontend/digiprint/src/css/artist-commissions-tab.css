@@ -1,0 +1,23 @@
+/* Form thêm commission — modal hẹp hơn (react-bootstrap gắn class lên .modal-dialog) */
+.modal-dialog.modal-commission-form {
+    max-width: min(92vw, 440px);
+}
+
+/* Giống layout form Profile: label + ô nhập viền */
+.commission-modal-form .form-label {
+    font-weight: 500;
+}
+
+/* Bảng commissions: thead xám nhẹ, tbody nền trắng */
+.artist-commissions-table thead th {
+    background-color: #e9ecef;
+    border-color: #dee2e6;
+}
+
+.artist-commissions-table tbody {
+    background-color: #fff;
+}
+
+.artist-commissions-table tbody tr:hover {
+    background-color: rgba(0, 0, 0, 0.02);
+}

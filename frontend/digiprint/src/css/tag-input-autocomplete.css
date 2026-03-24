@@ -1,0 +1,30 @@
+.tag-input-autocomplete-wrap {
+    z-index: 1;
+}
+
+.tag-input-autocomplete-list {
+    top: 100%;
+    left: 0;
+    margin-top: 2px;
+    max-height: 240px;
+    overflow-y: auto;
+    z-index: 1050;
+    border-radius: 0.375rem;
+}
+
+/* Searchbar: full width of pill, inset như layout cũ (mx-2) */
+.tag-input-autocomplete-list--in-searchbar {
+    left: 0.5rem;
+    right: 0.5rem;
+    width: auto;
+}
+
+.tag-input-autocomplete-list .list-group-item.active {
+    background-color: var(--bs-primary);
+    border-color: var(--bs-primary);
+    color: #fff;
+}
+
+.tag-input-autocomplete-list .list-group-item.active .text-muted {
+    color: rgba(255, 255, 255, 0.85) !important;
+}

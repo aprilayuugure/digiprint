@@ -1,0 +1,48 @@
+/* Edit / delete dưới card (trang Works artist) */
+.work-card-manage-row {
+    border-top: 1px solid rgba(0, 0, 0, 0.06);
+    min-height: 32px;
+}
+
+.work-card {
+    border: none !important;
+    box-shadow: none;
+    background: transparent;
+}
+
+.work-card-like-row {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    padding-top: 6px;
+    padding-right: 2px;
+}
+
+.work-card-like-inner {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    user-select: none;
+}
+
+.work-card-like-heart {
+    color: #6c757d;
+    line-height: 1;
+}
+
+.work-card-like-heart svg {
+    width: 18px;
+    height: 18px;
+    display: block;
+}
+
+.work-card-like-count {
+    font-size: 0.95rem;
+    color: #6c757d;
+    min-width: 2ch;
+    text-align: right;
+}
+
+.work-card img {
+    border-radius: 8px;
+}
