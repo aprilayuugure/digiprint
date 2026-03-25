@@ -2,6 +2,7 @@ package com.spring.digiprint.exceptions;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.*;
+import org.springframework.http.converter.HttpMessageNotWritableException;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -70,7 +71,15 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<Map<String, String>> handleNotReadable(HttpMessageNotReadableException ex) {
+        log.error("HttpMessageNotReadableException: {}", ex.getMessage(), ex);
         return ResponseEntity.badRequest().body(bodyWithMessage("Invalid request body"));
+    }
+
+    @ExceptionHandler(HttpMessageNotWritableException.class)
+    public ResponseEntity<Map<String, String>> handleNotWritable(HttpMessageNotWritableException ex) {
+        log.error("HttpMessageNotWritableException (serialization): {}", ex.getMessage(), ex);
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(bodyWithMessage("Failed to serialize response (check circular references)"));
     }
 
     @ExceptionHandler(BadCredentialsException.class)

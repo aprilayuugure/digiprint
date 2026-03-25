@@ -1,5 +1,6 @@
 package com.spring.digiprint.entities;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.spring.digiprint.enums.OrderStatus;
 import jakarta.persistence.*;
 import lombok.*;
@@ -26,6 +27,7 @@ public class Order implements Serializable {
     private Account customer;
 
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
     private List<OrderItem> orderItems;
 
     @Column(name = "price", nullable = false)

@@ -1,6 +1,7 @@
 package com.spring.digiprint.entities;
 
 import com.spring.digiprint.converters.StringListJsonConverter;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -22,10 +23,15 @@ public class OrderItem implements Serializable {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "order_id", nullable = false)
+    @JsonIgnore
     private Order order;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "commission_id", nullable = false)
+    // If OrderItem ever gets serialized directly, this can form loops:
+    // Order -> orderItems -> commission -> ... -> order -> ...
+    // so we skip this back-reference at the JSON layer.
+    @JsonIgnore
     private Commission commission;
 
     /** Snapshot commission tại thời điểm đặt đơn/chỉnh draft. */

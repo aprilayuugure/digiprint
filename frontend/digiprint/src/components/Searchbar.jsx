@@ -16,12 +16,16 @@ function Searchbar() {
     const initialFromUrl = tagParams.filter((t) => t?.trim()).join(" ");
 
     const [value, setValue] = useState(initialFromUrl);
-    const isFirstMount = useRef(true);
     const debounceRef = useRef(null);
 
+    // /works/:genre
+    // /works/:genre/page/:pageId
     const match = location.pathname.match(/^\/works\/([^/]+)/);
     const segment = match ? match[1].toUpperCase() : null;
     const currentGenre = segment && VALID_GENRES.includes(segment) ? segment : null;
+    const currentGenrePath = match ? match[1] : null;
+    const paginatedMatch = location.pathname.match(/^\/works\/([^/]+)\/page\/(\d+)$/);
+    const isOnPaginatedWorksRoute = Boolean(paginatedMatch);
 
     const ac = useTagAutocomplete({
         value,
@@ -30,13 +34,9 @@ function Searchbar() {
     });
 
     // Sync input from URL when navigating to a page with tags
+    // Use functional setState to avoid unnecessary updates (prevents re-trigger loops).
     useEffect(() => {
-        if (isFirstMount.current) {
-            setValue(initialFromUrl);
-            isFirstMount.current = false;
-        } else {
-            setValue(initialFromUrl);
-        }
+        setValue((prev) => (prev === initialFromUrl ? prev : initialFromUrl));
     }, [location.pathname, initialFromUrl]);
 
     // Auto-search: debounce then navigate with tags (only when on a valid genre list page)
@@ -44,22 +44,32 @@ function Searchbar() {
         debounceRef.current = setTimeout(() => {
             if (!currentGenre || !match) return;
 
-            const currentGenrePath = match[1];
             const tags = value.trim().split(/\s+/).filter((t) => t);
 
             if (tags.length === 0) {
-                navigate(`/works/${currentGenrePath}`);
+                // IMPORTANT: when user is already on /works/:genre/page/:n,
+                // don't auto-navigate back to /page/1 just because tags are empty.
+                // Otherwise pagination will "jump" (page 2 -> page 1) due to value sync from URL.
+                if (isOnPaginatedWorksRoute) return;
+
+                navigate(`/works/${currentGenrePath}/page/1`);
                 return;
             }
 
             const params = new URLSearchParams();
             params.set("genre", currentGenre);
             tags.forEach((t) => params.append("tags", t));
-            navigate(`/works/${currentGenrePath}?${params.toString()}`);
+
+            // When tags are present, always reset to page 1 for consistent UX.
+            navigate(`/works/${currentGenrePath}/page/1?${params.toString()}`);
         }, DEBOUNCE_MS);
 
         return () => clearTimeout(debounceRef.current);
-    }, [value, location.pathname, navigate, match, currentGenre]);
+        // IMPORTANT:
+        // Do NOT depend on `location.pathname` here.
+        // When user paginates (/works/:genre/page/:n), pathname changes and would trigger this effect again,
+        // causing navigation reset (page=1) and request loop.
+    }, [value, navigate, currentGenrePath, currentGenre]);
 
     const handleSubmit = (e) => {
         e.preventDefault();

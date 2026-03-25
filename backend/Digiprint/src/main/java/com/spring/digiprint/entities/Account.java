@@ -23,6 +23,7 @@ public class Account implements UserDetails {
     private Integer accountId;
 
     @OneToOne(mappedBy = "account", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
     private User user;
 
     @Column(name = "email", unique = true, nullable = false)

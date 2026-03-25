@@ -87,7 +87,7 @@ function ProfileForm() {
                             ? myFollowingRes.data
                             : [];
                         setIsFollowing(
-                            followingList.some((f) => Number(f.artistId) === Number(artistId))
+                            followingList.some((f) => Number(f.userId) === Number(artistId))
                         );
                     }
                 } else if (!cancelled) {

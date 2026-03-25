@@ -242,17 +242,27 @@ GO
 
 INSERT INTO accounts (email, password, role) VALUES
 ('admin@digiprint.com', '$2a$10$OkRYTqmc72c6x9QD5PVJBeiBT7CL3PIeMlyIzcJbJzPPUL6Dwu5sO', 'ADMIN'),
-('artist1@digiprint.com', '$2a$10$OkRYTqmc72c6x9QD5PVJBeiBT7CL3PIeMlyIzcJbJzPPUL6Dwu5sO', 'ARTIST'),
-('artist2@digiprint.com', '$2a$10$OkRYTqmc72c6x9QD5PVJBeiBT7CL3PIeMlyIzcJbJzPPUL6Dwu5sO', 'ARTIST'),
-('user1@digiprint.com', '$2a$10$OkRYTqmc72c6x9QD5PVJBeiBT7CL3PIeMlyIzcJbJzPPUL6Dwu5sO', 'USER'),
-('user2@digiprint.com', '$2a$10$OkRYTqmc72c6x9QD5PVJBeiBT7CL3PIeMlyIzcJbJzPPUL6Dwu5sO', 'USER');
+('yuki@digiprint.com', '$2a$10$OkRYTqmc72c6x9QD5PVJBeiBT7CL3PIeMlyIzcJbJzPPUL6Dwu5sO', 'ARTIST'),
+('chuuni@digiprint.com', '$2a$10$OkRYTqmc72c6x9QD5PVJBeiBT7CL3PIeMlyIzcJbJzPPUL6Dwu5sO', 'ARTIST'),
+('taiyo@digiprint.com', '$2a$10$OkRYTqmc72c6x9QD5PVJBeiBT7CL3PIeMlyIzcJbJzPPUL6Dwu5sO', 'ARTIST'),
+('na@digiprint.com', '$2a$10$OkRYTqmc72c6x9QD5PVJBeiBT7CL3PIeMlyIzcJbJzPPUL6Dwu5sO', 'ARTIST'),
+('trang@digiprint.com', '$2a$10$OkRYTqmc72c6x9QD5PVJBeiBT7CL3PIeMlyIzcJbJzPPUL6Dwu5sO', 'ARTIST'),
+('kirara@digiprint.com', '$2a$10$OkRYTqmc72c6x9QD5PVJBeiBT7CL3PIeMlyIzcJbJzPPUL6Dwu5sO', 'ARTIST'),
+('aprila@digiprint.com', '$2a$10$OkRYTqmc72c6x9QD5PVJBeiBT7CL3PIeMlyIzcJbJzPPUL6Dwu5sO', 'USER'),
+('tabi@digiprint.com', '$2a$10$OkRYTqmc72c6x9QD5PVJBeiBT7CL3PIeMlyIzcJbJzPPUL6Dwu5sO', 'USER');
+
+SELECT * FROM accounts;
 
 INSERT INTO users (username, first_name, last_name, gender, location, biography, account_id)
 VALUES
 ('admin', 'System', 'Admin', 'OTHER', 'Server', 'Administrator account', 1),
 ('yuki_nyakeri', 'Yuki', 'Nyayaki', 'FEMALE', 'Japan', 'Anime illustrator', 2),
-('chuuni_chinori', 'Chuuni', 'Chinori', 'MALE', 'Korea', 'Concept artist', 3),
-('user_one', 'Charlie', 'Viewer', 'MALE', 'USA', 'Art fan', 4),
-('user_two', 'Daisy', 'Fan', 'FEMALE', 'Canada', 'Anime lover', 5);
+('chuuni_chinori', 'Chuuni', 'Chinori', 'FEMALE', 'Vietnam', 'Concept artist', 3),
+('torio_taiyo', 'Torio', 'Taiyo', 'MALE', 'Vietnam', 'Chibi specialist', 4),
+('nakamira', 'Truong', 'Ngoc', 'FEMALE', 'Vietnam', 'VGen artist', 5),
+('kano', 'Linh', 'Trang', 'FEMALE', 'Vietnam', 'VGen artist', 6),
+('kirara_magic', 'Kirara', 'Magic', 'MALE', 'Philippines', 'Electronic music producer', 7),
+('aprilaracle', 'Aprila', 'Yuugure', 'MALE', 'England', 'Art fan', 8),
+('tabitabi', 'Tabi', 'Kazerata', 'FEMALE', 'France', 'Anime lover', 9);
 
 

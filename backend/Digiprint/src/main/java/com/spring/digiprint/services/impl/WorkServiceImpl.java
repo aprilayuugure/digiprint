@@ -10,6 +10,7 @@ import com.spring.digiprint.repositories.*;
 import com.spring.digiprint.services.*;
 import com.spring.digiprint.utils.SecurityUtil;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -23,6 +24,7 @@ import java.util.*;
 @Transactional
 @RequiredArgsConstructor
 @Service
+@Slf4j
 public class WorkServiceImpl implements WorkService {
     private final WorkRepository workRepo;
     private final TagRepository tagRepo;
@@ -98,7 +100,18 @@ public class WorkServiceImpl implements WorkService {
                 ? null
                 : tags.stream().filter(t -> t != null && !t.isBlank()).distinct().toList();
 
-        return new PageResponse<>(workRepo.filterWorksByConditionsAndTags(
+        log.debug(
+                "filterWorks conditions: genre={}, artistNamePresent={}, startDate={}, endDate={}, ratingFilterCount={}, tagFilterCount={}, sort={}",
+                genre,
+                artistName != null && !artistName.isBlank(),
+                startDate,
+                endDate,
+                ratingFilter == null ? 0 : ratingFilter.size(),
+                tagFilter == null ? 0 : tagFilter.size(),
+                sort
+        );
+
+        var resultPage = workRepo.filterWorksByConditionsAndTags(
                 genre,
                 (artistName != null && !artistName.isBlank()) ? artistName : null,
                 startDateTime,
@@ -107,7 +120,12 @@ public class WorkServiceImpl implements WorkService {
                 tagFilter,
                 tagFilter != null ? tagFilter.size() : 0,
                 pageable
-        ));
+        );
+
+        log.info("filterWorks result: page={}, size={}, totalElements={}, totalPages={}",
+                resultPage.getNumber(), resultPage.getSize(), resultPage.getTotalElements(), resultPage.getTotalPages());
+
+        return new PageResponse<>(resultPage);
     }
 
     @Override

@@ -19,7 +19,7 @@ export const workInitialState = {
 
     page: 0,
     totalPages: 0,
-    size: 20,
+    size: 10,
 
     filterArtistName: "",
     filterArtistAvatar: "",
@@ -36,6 +36,10 @@ export const workInitialState = {
 export function WorkReducer(state, action) {
     switch (action.type) {
         case "SET_WORK_PAGE":
+            // `page` is the requested page index (0-based) from the caller.
+            // Using it as the source of truth prevents any out-of-order responses
+            // from overwriting the currently intended page.
+            const pageIndex = action.page ?? action.payload?.page ?? state.page;
             return {
                 ...state,        
                 genre: action.genre,
@@ -43,10 +47,10 @@ export function WorkReducer(state, action) {
                     ...state.pages,
                     [action.genre]: {
                         ...(state.pages[action.genre] || {}),
-                        [action.payload.page]: action.payload.content
+                        [pageIndex]: action.payload.content
                     }
                 },
-                page: action.payload.page,
+                page: pageIndex,
                 totalPages: action.payload.totalPages,
                 size: action.payload.size,
                 errors: {},

@@ -1,5 +1,6 @@
 package com.spring.digiprint.entities;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.spring.digiprint.enums.Genre;
 import jakarta.persistence.*;
 import lombok.*;
@@ -33,5 +34,6 @@ public class Tag implements Serializable{
     private Genre tagGenre;
 
     @OneToMany(mappedBy = "tag", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
     private List<WorkTag> workTags;
 }

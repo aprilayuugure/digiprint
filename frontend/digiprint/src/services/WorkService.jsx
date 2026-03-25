@@ -6,6 +6,7 @@ const WorkService = {
     },
 
     getWorksPageByGenre: (genre, page = 0, size = 20) => {
+        const url = `/works/search?genre=${encodeURIComponent(genre)}&page=${encodeURIComponent(page)}&size=${encodeURIComponent(size)}&sort=recent`;
         return api.get("/works/search", {
             params: { genre, page, size, sort: "recent" }
         });
@@ -37,7 +38,8 @@ const WorkService = {
                 params.append("ratings", r);
             }
         });
-        return api.get(`/works/search?${params.toString()}`);
+        const url = `/works/search?${params.toString()}`;
+        return api.get(url);
     },
 
     addWork: (data) => {

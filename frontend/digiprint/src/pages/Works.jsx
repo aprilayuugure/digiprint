@@ -1,10 +1,10 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Container, Row, Col } from "react-bootstrap";
 import { useWork } from "../hooks/useWork";
 import { useAuthContext } from "../contexts/AuthContext";
 import Pagination from "../components/Pagination";
 import WorkCard from "../components/WorkCard";
-import { Link, useParams, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import WorkService from "../services/WorkService";
 import { FaEdit, FaTrash } from "react-icons/fa";
 import { VALID_GENRES } from "../constants/validGenres";
@@ -14,6 +14,7 @@ function Work({ genre: genreProp, username: usernameProp, adminManageMode = fals
     const params = useParams();
     const genre = genreProp ?? params.genre;
     const username = usernameProp ?? params.username;
+    const navigate = useNavigate();
     const { isAuthenticated, user, canManageWorks } = useAuthContext();
     const [deletingId, setDeletingId] = useState(null);
 
@@ -52,9 +53,24 @@ function Work({ genre: genreProp, username: usernameProp, adminManageMode = fals
     const activeTags = useMemo(() => tagParams.filter((t) => t && t.trim()), [tagParams]);
     const activeTagsKey = useMemo(() => activeTags.join(","), [activeTags]);
 
+    // URL-driven pagination only for the route-based list page (`/works/:genre`).
+    // Embedded views in `/artist/:username` pass `genre`/`username` as props, so we keep in-memory pagination there.
+    const isRoutePaginationEnabled = genreProp == null && usernameProp == null;
+    const { pageId } = params;
+    const urlPageIndex = useMemo(() => {
+        if (!isRoutePaginationEnabled) return 0;
+        const n = Number(pageId);
+        if (!Number.isFinite(n) || n <= 0) return 0; // treat /page=0 or invalid as first page
+        return Math.max(0, n - 1); // route is 1-based, API is 0-based
+    }, [isRoutePaginationEnabled, pageId]);
+
+    // For route pagination, keep the UI page strictly in sync with URL.
+    // This prevents out-of-order responses from an older request from "jumping" the UI back.
+    const activePageIndex = isRoutePaginationEnabled ? urlPageIndex : state.page;
+
     const works = useMemo(
-        () => state.pages[normalizedGenre]?.[state.page] || [],
-        [state.pages, normalizedGenre, state.page]
+        () => state.pages[normalizedGenre]?.[activePageIndex] || [],
+        [state.pages, normalizedGenre, activePageIndex]
     );
 
     const filtersForUi = useMemo(() => {
@@ -76,6 +92,13 @@ function Work({ genre: genreProp, username: usernameProp, adminManageMode = fals
         state.filterStartDate,
     ]);
 
+    // Draft filters (user edits in UI). We only commit them to reducer on "Apply filters".
+    // This prevents route-pagination fetch from running on every keystroke/change.
+    const [draftFilters, setDraftFilters] = useState(filtersForUi);
+    useEffect(() => {
+        setDraftFilters(filtersForUi);
+    }, [filtersForUi]);
+
     const effectiveRatings = useMemo(() => {
         if (!isAuthenticated) {
             return filtersForUi.rating === "SAFE" || filtersForUi.rating === "SUGGESTIVE"
@@ -86,17 +109,24 @@ function Work({ genre: genreProp, username: usernameProp, adminManageMode = fals
     }, [filtersForUi.rating, isAuthenticated]);
 
     const performSearch = useCallback(
-        (page) => {
+        (page, filtersOverride) => {
+            const f = filtersOverride ?? filtersForUi;
+            const ratings = !isAuthenticated
+                ? (f.rating === "SAFE" || f.rating === "SUGGESTIVE"
+                    ? [f.rating]
+                    : ["SAFE", "SUGGESTIVE"])
+                : (f.rating === "ALL" ? undefined : [f.rating]);
+
             if (!normalizedGenre || !VALID_GENRES.includes(normalizedGenre)) return;
 
             searchWorks(
                 normalizedGenre,
                 {
-                    artistName: forcedArtistName || filtersForUi.artistName?.trim() || undefined,
-                    startDate: filtersForUi.startDate || undefined,
-                    endDate: filtersForUi.endDate || undefined,
-                    ratings: effectiveRatings,
-                    sort: filtersForUi.sort,
+                    artistName: forcedArtistName || f.artistName?.trim() || undefined,
+                    startDate: f.startDate || undefined,
+                    endDate: f.endDate || undefined,
+                    ratings,
+                    sort: f.sort,
                     tags: activeTags,
                 },
                 page
@@ -104,13 +134,10 @@ function Work({ genre: genreProp, username: usernameProp, adminManageMode = fals
         },
         [
             activeTags,
-            effectiveRatings,
             forcedArtistName,
-            filtersForUi.artistName,
-            filtersForUi.endDate,
-            filtersForUi.sort,
-            filtersForUi.startDate,
+            filtersForUi,
             normalizedGenre,
+            isAuthenticated,
             searchWorks,
         ]
     );
@@ -121,19 +148,90 @@ function Work({ genre: genreProp, username: usernameProp, adminManageMode = fals
             setDeletingId(workId);
             try {
                 await WorkService.deleteWork(workId);
-                await performSearch(state.page);
+                await performSearch(activePageIndex, filtersForUi);
             } catch (err) {
                 console.error(err);
             } finally {
                 setDeletingId(null);
             }
         },
-        [performSearch, state.page]
+        [performSearch, activePageIndex]
     );
 
     useEffect(() => {
+        // When we paginate via route params (/works/:genre/page/:pageId),
+        // let the urlPageIndex effect be the single source of truth.
+        // Otherwise, performSearch(0) may override the page the user clicked.
+        if (isRoutePaginationEnabled) return;
         performSearch(0);
-    }, [performSearch, activeTagsKey]);
+    }, [performSearch, activeTagsKey, isRoutePaginationEnabled]);
+
+    // Route pagination effect with anti-loop guard:
+    // Only fetch when (page index + filter snapshot) actually changes.
+    const lastFetchKeyRef = useRef("");
+    useEffect(() => {
+        if (!isRoutePaginationEnabled) return;
+        if (!normalizedGenre) return;
+
+        const ratingsKey = Array.isArray(effectiveRatings)
+            ? effectiveRatings.join(",")
+            : "ALL";
+
+        const key = [
+            normalizedGenre,
+            forcedArtistName || "",
+            state.filterArtistName || "",
+            String(filtersForUi.startDate || ""),
+            String(filtersForUi.endDate || ""),
+            ratingsKey,
+            String(filtersForUi.sort || ""),
+            activeTagsKey,
+            String(urlPageIndex ?? 0),
+        ].join("|");
+
+        if (lastFetchKeyRef.current === key) return;
+        lastFetchKeyRef.current = key;
+
+        performSearch(urlPageIndex);
+    }, [
+        isRoutePaginationEnabled,
+        normalizedGenre,
+        forcedArtistName,
+        state.filterArtistName,
+        filtersForUi.startDate,
+        filtersForUi.endDate,
+        filtersForUi.sort,
+        effectiveRatings,
+        activeTagsKey,
+        urlPageIndex,
+        performSearch,
+    ]);
+
+    const handlePageChange = (p) => {
+        if (!isRoutePaginationEnabled) {
+            performSearch(p);
+            return;
+        }
+
+        // Keep existing query params (e.g., `tags=`) while moving pagination into the pathname.
+        const q = searchParams.toString();
+        const nextPageId = p + 1; // 1-based in URL
+        const rawGenre = params.genre ?? normalizedGenre;
+        const genreForUrl = String(rawGenre);
+        const pathname = `/works/${encodeURIComponent(genreForUrl)}/page/${nextPageId}`;
+        navigate(q ? `${pathname}?${q}` : pathname);
+    };
+
+    const appliedFiltersPayload = useMemo(() => {
+        return {
+            filterArtistName: forcedArtistName || draftFilters.artistName,
+            filterArtistAvatar: forcedArtistName ? "" : draftFilters.artistAvatar,
+            filterStartDate: draftFilters.startDate,
+            filterEndDate: draftFilters.endDate,
+            filterRating: draftFilters.rating,
+            filterSort: draftFilters.sort,
+        };
+    }, [draftFilters, forcedArtistName]);
 
     return (
         <Container>
@@ -145,21 +243,33 @@ function Work({ genre: genreProp, username: usernameProp, adminManageMode = fals
                 </div>
             )}
             <WorkFilter
-                filters={filtersForUi}
+                filters={draftFilters}
                 hideArtist={hideArtist}
                 onFiltersChange={(partial) =>
-                    setFilters({
-                        filterArtistName: forcedArtistName || (partial.artistName ?? state.filterArtistName),
-                        filterArtistAvatar: forcedArtistName ? "" : (partial.artistAvatar ?? state.filterArtistAvatar),
-                        filterStartDate: partial.startDate ?? state.filterStartDate,
-                        filterEndDate: partial.endDate ?? state.filterEndDate,
-                        filterRating: partial.rating ?? state.filterRating,
-                        filterSort: partial.sort ?? state.filterSort,
-                    })
+                    setDraftFilters((prev) => ({
+                        ...prev,
+                        artistName: forcedArtistName ? forcedArtistName : (partial.artistName ?? prev.artistName),
+                        artistAvatar: forcedArtistName ? "" : (partial.artistAvatar ?? prev.artistAvatar),
+                        startDate: partial.startDate ?? prev.startDate,
+                        endDate: partial.endDate ?? prev.endDate,
+                        rating: partial.rating ?? prev.rating,
+                        sort: partial.sort ?? prev.sort,
+                    }))
                 }
-                onApply={() =>
-                    performSearch(0)
-                }
+                onApply={() => {
+                    // Commit draft filters into applied state
+                    setFilters(appliedFiltersPayload);
+
+                    if (isRoutePaginationEnabled) {
+                        // Reset pagination to page 1 by URL (1-based).
+                        const q = searchParams.toString();
+                        const pathname = `/works/${encodeURIComponent(normalizedGenre)}/page/1`;
+                        navigate(q ? `${pathname}?${q}` : pathname, { replace: true });
+                    } else {
+                        // Embedded view: keep in-memory pagination.
+                        performSearch(0, draftFilters);
+                    }
+                }}
             />
 
             <Row xs = {2} sm = {3} md = {4} lg = {5}>
@@ -173,8 +283,8 @@ function Work({ genre: genreProp, username: usernameProp, adminManageMode = fals
                                         to={`/works/update/${work.workId}?adminEditTags=1`}
                                         className="text-decoration-none"
                                         style={{ color: "#0d6efd" }}
-                                        title="Edit tags"
-                                        aria-label="Edit work tags"
+                                        title="Edit tags & rating"
+                                        aria-label="Edit work tags and rating"
                                         onClick={(e) => e.stopPropagation()}
                                     >
                                         <FaEdit size={20} />
@@ -212,11 +322,10 @@ function Work({ genre: genreProp, username: usernameProp, adminManageMode = fals
             </Row>
 
             <Pagination
-                page = {state.page}
+                page = {activePageIndex}
                 totalPages = {state.totalPages}
-                onPageChange={(p) =>
-                    performSearch(p)
-                } />
+                onPageChange={handlePageChange}
+            />
         </Container>
     )
 }

@@ -1,5 +1,6 @@
 package com.spring.digiprint.entities;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.spring.digiprint.enums.Genre;
 import jakarta.persistence.*;
 import lombok.*;
@@ -37,5 +38,6 @@ public class Commission {
 
     @OneToMany(mappedBy = "commission", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("sortOrder ASC")
+    @JsonIgnore
     private List<Sample> attachments = new ArrayList<>();
 }

@@ -6,6 +6,7 @@ import com.spring.digiprint.enums.Genre;
 import com.spring.digiprint.enums.Rating;
 import com.spring.digiprint.services.WorkService;
 import jakarta.validation.Valid;
+import lombok.extern.slf4j.Slf4j;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -21,6 +22,7 @@ import java.util.List;
 
 @CrossOrigin
 @RequiredArgsConstructor
+@Slf4j
 @RequestMapping("/works")
 @RestController
 public class WorkController {
@@ -39,8 +41,22 @@ public class WorkController {
             @RequestParam(required = false) List<Rating> ratings,
             @RequestParam(defaultValue = "recent") String sort,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size
+            @RequestParam(defaultValue = "10") int size
     ) {
+        log.info(
+                "GET /works/search genre={}, artistName={}, page={}, size={}, sort={}, tagsCount={}, ratingsCount={}",
+                genre,
+                artistName,
+                page,
+                size,
+                sort,
+                tags == null ? 0 : tags.size(),
+                ratings == null ? 0 : ratings.size()
+        );
+
+        // Enforce a server-side max page size to keep paging predictable.
+        size = Math.max(1, Math.min(size, 10));
+
         List<Rating> effectiveRatings = ratings;
         if (!isAuthenticated()) {
             effectiveRatings = ratings == null || ratings.isEmpty()
@@ -49,6 +65,9 @@ public class WorkController {
                             .filter(r -> r == Rating.SAFE || r == Rating.SUGGESTIVE)
                             .toList();
         }
+
+        log.debug("searchWorks effective size={}, effectiveRatings={}", size, effectiveRatings);
+
         return workService.filterWorks(genre, artistName, startDate, endDate, tags, effectiveRatings, sort, page, size);
     }
 

@@ -1,6 +1,7 @@
 package com.spring.digiprint.entities;
 
 import com.spring.digiprint.enums.*;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 import java.io.Serializable;
@@ -48,6 +49,7 @@ public class User implements Serializable {
     private String biography;
 
     @OneToOne
+    @JsonIgnore
     @JoinColumn(name = "account_id")
     private Account account;
 }

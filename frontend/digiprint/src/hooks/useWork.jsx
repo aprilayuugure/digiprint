@@ -1,9 +1,13 @@
-import { useReducer, useCallback } from "react";
+import { useReducer, useCallback, useRef } from "react";
 import { workInitialState, WorkReducer } from "../reducers/WorkReducer";
 import WorkService from "../services/WorkService";
 
 export function useWork() {
     const [state, dispatch] = useReducer(WorkReducer, workInitialState);
+    // Avoid race conditions when route params change quickly (e.g., switching page),
+    // so an older response doesn't overwrite a newer one.
+    const latestSearchRequestIdRef = useRef(0);
+    const latestPageRequestIdRef = useRef(0);
 
     const handleFieldChange = (field, value) => {
         dispatch({
@@ -53,6 +57,7 @@ export function useWork() {
     }, []);
 
     const getWorksPageByGenre = useCallback( async (genre, page = 0) => {
+        const requestId = ++latestPageRequestIdRef.current;
         if (state.pages[genre]?.[page]) {
             dispatch({
                 type: "SET_PAGE",
@@ -65,9 +70,11 @@ export function useWork() {
         try {
             const res = await WorkService.getWorksPageByGenre(genre, page, state.size);
 
+            if (requestId !== latestPageRequestIdRef.current) return false;
             dispatch({
                 type: "SET_WORK_PAGE",
                 genre: genre,
+                page: page,
                 payload: res.data
             });
             
@@ -75,6 +82,7 @@ export function useWork() {
             return true;
         }
         catch (error) {
+            if (requestId !== latestPageRequestIdRef.current) return false;
             dispatch({
                 type: "SET_ERRORS",
                 payload: error.response?.data || { general: "Cannot load works" }
@@ -87,6 +95,7 @@ export function useWork() {
 
     const searchWorks = useCallback(
         async (genre, { artistName, startDate, endDate, tags, ratings, sort }, page = 0) => {
+            const requestId = ++latestSearchRequestIdRef.current;
             try {
                 const res = await WorkService.searchWorks(genre, {
                     artistName,
@@ -99,14 +108,17 @@ export function useWork() {
                     size: state.size,
                 });
 
+                if (requestId !== latestSearchRequestIdRef.current) return false;
                 dispatch({
                     type: "SET_WORK_PAGE",
                     genre: genre,
+                    page: page,
                     payload: res.data,
                 });
 
                 return true;
             } catch (error) {
+                if (requestId !== latestSearchRequestIdRef.current) return false;
                 dispatch({
                     type: "SET_ERRORS",
                     payload: error.response?.data || { general: "Cannot load works" },

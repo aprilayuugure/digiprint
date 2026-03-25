@@ -1,5 +1,6 @@
 package com.spring.digiprint.entities;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.spring.digiprint.enums.*;
 import jakarta.persistence.*;
 import lombok.*;
@@ -47,7 +48,10 @@ public class Work implements Serializable {
     @JoinColumn(name = "user_id")
     private User user;
 
+    // Break potential Jackson recursion when serializing entities:
+    // Work -> workTags -> tag -> workTags -> ...
     @OneToMany(mappedBy = "work", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
     private List<WorkTag> workTags;
 
     @Column(name = "like_count")

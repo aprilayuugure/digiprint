@@ -134,7 +134,7 @@ function WorkForm() {
     const formView = (
         <Container>
             <h2 className = "mb-4 text-center">
-                {id ? (adminTagOnlyMode ? "Update work tags" : "Update work") : "Add work"}
+                {id ? (adminTagOnlyMode ? "Update work tags & rating" : "Update work") : "Add work"}
             </h2>
 
             <Form onSubmit = {handleSubmit}>
@@ -258,7 +258,6 @@ function WorkForm() {
                             label = "Safe"
                             name = "rating"
                             checked = {state.work.rating === "SAFE"}
-                            disabled={adminTagOnlyMode}
                             onChange = {() => handleRatingChange("SAFE")}
                         />
 
@@ -268,7 +267,6 @@ function WorkForm() {
                             label = "Suggestive"
                             name = "rating"
                             checked={state.work.rating === "SUGGESTIVE"}
-                            disabled={adminTagOnlyMode}
                             onChange = {() => handleRatingChange("SUGGESTIVE")}
                         />
 
@@ -278,7 +276,6 @@ function WorkForm() {
                             label = "NSFW"
                             name = "rating"
                             checked = {state.work.rating === "NSFW"}
-                            disabled={adminTagOnlyMode}
                             onChange = {() => handleRatingChange("NSFW")}
                         />
                     </div>

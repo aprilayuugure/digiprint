@@ -1,5 +1,6 @@
 package com.spring.digiprint.entities;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -32,6 +33,7 @@ public class Comment implements Serializable {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "reply_to_id")
+    @JsonIgnore
     private Comment replyTo;
 
     @Column(name = "comment_content", nullable = false, length = 2000)
