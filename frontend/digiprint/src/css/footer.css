@@ -1,0 +1,8 @@
+.site-footer {
+    --site-footer-muted: #6c757d;
+}
+
+.site-footer .site-footer-copy {
+    color: var(--site-footer-muted);
+    font-size: 0.875rem;
+}

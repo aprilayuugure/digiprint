@@ -6,7 +6,6 @@ import Register from "./pages/Register";
 import Profile from "./pages/Profile";
 import HomePage from "./pages/Home";
 import Works from "./pages/Works";
-import WorksDefaultPageRedirect from "./components/WorksDefaultPageRedirect";
 import WorkForm from "./pages/WorkForm";
 import WorkDetail from "./pages/WorkDetail";
 import Artist from "./pages/Artist";
@@ -46,7 +45,7 @@ function App() {
           <Route path = "/artist/:username" element = {<Artist />} />
           <Route path = "/tags/:tagName" element = {<TagDetail />} />
           <Route path = "/works/:genre/page/:pageId" element = {<Works />} />
-          <Route path = "/works/:genre" element = {<WorksDefaultPageRedirect />} />
+          <Route path = "/works/:genre" element = {<Works />} />
           <Route path = "/artist/:username/works/:genre" element = {<ArtistWorksRedirect />} />
           <Route path = "/work/:id" element = {<WorkDetail />} />
           <Route path = "/works/add" element = {<ProtectedArtistRoute><WorkForm /></ProtectedArtistRoute>} />
